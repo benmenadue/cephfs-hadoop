@@ -235,10 +235,10 @@ public class CephFileSystem extends FileSystem {
   /**
    * Get the FileStatus for each listing in a directory.
    * @param path The directory to get listings from.
-   * @return FileStatus[] containing one FileStatus for each directory listing;
-   *         null if path does not exist.
+   * @return FileStatus[] containing one FileStatus for each directory listing.
+   * @throws FileNotFoundException if the path doesn't exist.
    */
-  public FileStatus[] listStatus(Path path) throws IOException {
+  public FileStatus[] listStatus(Path path) throws IOException, FileNotFoundException {
     path = makeAbsolute(path);
 
     String[] dirlist = ceph.listdir(path);
@@ -253,7 +253,7 @@ public class CephFileSystem extends FileSystem {
     if (isFile(path))
       return new FileStatus[] { getFileStatus(path) };
 
-    return null;
+    throw new FileNotFoundException(path.toString());
   }
 
   @Override
@@ -271,12 +271,12 @@ public class CephFileSystem extends FileSystem {
 
     if (mtime != -1) {
       mask |= CephMount.SETATTR_MTIME;
-      stat.m_time = mtime;
+      stat.m_time = mtime / 1000;
     }
 
     if (atime != -1) {
       mask |= CephMount.SETATTR_ATIME;
-      stat.a_time = atime;
+      stat.a_time = atime / 1000;
     }
 
     ceph.setattr(path, stat, mask);
